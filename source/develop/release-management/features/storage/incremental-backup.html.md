@@ -168,18 +168,24 @@ disk contents.
 
 #### Enabling backup for VM disk
 
-Specify 'backup' flag on ```disk``` entity.
+Specify 'backup' property on ```disk``` entity: 'incremental'/'none' (TBD: 'full')
 
 Request:
 ```
 POST /vms/vm-uuid/disks
+
+<disk>
+    ...
+    <backup>incremental|none</backup>
+    ...
+</disk>
 ```
 
 Response:
 ```
 <disk>
     ...
-    <backup>incremental|full|none</backup>
+    <backup>incremental|none</backup>
     ...
 </disk>
 ```
@@ -199,23 +205,23 @@ Response:
 <disks>
     <disk>
         ...
-        <backup>incremental|null</backup>
+        <backup>incremental|none</backup>
         ...
-    </disks>
+    </disk>
     ...
 </disks>
 ```
 
 #### Starting backup
 
-Start incremental backup since backup id "previous-backup-uuid".
+Start incremental backup since checkpoint id "previous-checkpoint-uuid".
 
 Request:
 ```
 POST /vms/vm-uuid/backups
 
 <backup>
-    <incremental>previous-backup-uuid</incremental>
+    <checkpoint>previous-checkpoint-uuid</checkpoint>
     <disks>
         <disk id="disk-uuid" />
         ...
@@ -226,7 +232,7 @@ POST /vms/vm-uuid/backups
 Response:
 ```
 <backup id="backup-uuid">
-    <incremental>previous-backup-uuid</incremental>
+    <checkpoint>previous-checkpoint-uuid</checkpoint>
     <disks>
         <disk id="disk-uuid" />
         ...
@@ -249,7 +255,7 @@ GET /vms/vm-uuid/backups/backup-uuid
 Response:
 ```
 <backup id="backup-uuid">
-    <incremental>previous-backup-uuid</incremental>
+    <incremental>previous-checkpoint-uuid</incremental>
     <disks>
         <disk id="disk-uuid">
             <image_id>image-uuid</image_id>
@@ -504,15 +510,15 @@ Add backup column to base_disks table. Use to mark an image for
 incremental backup.
 
 - base_disks
-  - backup: (incremental/null)
+  - backup: (incremental/none)
 
 Add vm_backups table. This table keep the information about running
 backups tasks. Use during backup to track and montior backup.
 
 - vm_backups
   - id: UUID
-  - checkpoint_id: "initializing"/"starting"/"ready"/"transferring"/"finalizing"
-  - incremental_id: UUID | null
+  - status: "initializing"/"starting"/"ready"/"transferring"/"finalizing"
+  - checkpoint_id: UUID/null
     - if specified, perform incremental including all checkpoints since
       that checkpoint.
   - vm_id: UUID
